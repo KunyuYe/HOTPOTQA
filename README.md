@@ -1,7 +1,7 @@
-# HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering
+# HotpotQA: Question answering to HotpotQADataset
 
 This repository contains the baseline model code, as well as the entire pipeline of running experiments on the HotpotQA dataset,
-including data download, data preprocessing, training, and evaluation.
+including data download, data preprocessing, training, and evaluation. 
 
 ## Requirements
 
@@ -42,7 +42,7 @@ a dict with the following keys:
 - `_id`: a unique id for this question-answer data point. This is useful for evaluation.
 - `question`: a string.
 - `answer`: a string. The test set does not have this key.
-- `supporting_facts`: a list. Each entry in the list is a list with two elements `[title, sent_id]`, where `title` denotes the title of the 
+- `supporting_facts`: a list. Each entry in the list is a list with two elements `[title, sent_id]`, where `title` denotes the title of the
 paragraph, and `sent_id` denotes the supporting fact's id (0-based) in this paragraph. The test set does not have this key.
 - `context`: a list. Each entry is a paragraph, which is represented as a list with two elements `[title, sentences]` and `sentences` is a list
 of strings.
@@ -71,7 +71,7 @@ when the training set is processed.
 
 Train a model
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --mode train --para_limit 2250 --batch_size 24 --init_lr 0.1 --keep_prob 1.0 \ 
+CUDA_VISIBLE_DEVICES=0 python main.py --mode train --para_limit 2250 --batch_size 24 --init_lr 0.1 --keep_prob 1.0 \
 --sp_lambda 1.0
 ```
 
@@ -87,7 +87,7 @@ which will be used during evaluation.
 
 First, make predictions and save the predictions into a file (replace `--save` with your own file name).
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --mode test --data_split dev --para_limit 2250 --batch_size 24 --init_lr 0.1 \ 
+CUDA_VISIBLE_DEVICES=0 python main.py --mode test --data_split dev --para_limit 2250 --batch_size 24 --init_lr 0.1 \
 --keep_prob 1.0 --sp_lambda 1.0 --save HOTPOT-20180924-160521 --prediction_file dev_distractor_pred.json
 ```
 
@@ -98,7 +98,7 @@ python hotpot_evaluate_v1.py dev_distractor_pred.json hotpot_dev_distractor_v1.j
 
 The same procedure can be repeated to evaluate the dev set in the fullwiki setting.
 ```
-CUDA_VISIBLE_DEVICES=0 python main.py --mode test --data_split dev --para_limit 2250 --batch_size 24 --init_lr 0.1 \ 
+CUDA_VISIBLE_DEVICES=0 python main.py --mode test --data_split dev --para_limit 2250 --batch_size 24 --init_lr 0.1 \
 --keep_prob 1.0 --sp_lambda 1.0 --save HOTPOT-20180924-160521 --prediction_file dev_fullwiki_pred.json --fullwiki
 python hotpot_evaluate_v1.py dev_fullwiki_pred.json hotpot_dev_fullwiki_v1.json
 ```
@@ -121,6 +121,3 @@ The code is distribued under the Apache 2.0 license.
 
 The preprocessing part and the data loader are adapted from https://github.com/HKUST-KnowComp/R-Net . The evaluation script is
 adapted from https://rajpurkar.github.io/SQuAD-explorer/ .
-
-
-
