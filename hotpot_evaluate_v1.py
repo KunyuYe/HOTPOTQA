@@ -4,6 +4,10 @@ import re
 import string
 from collections import Counter
 import pickle
+import nltk.translate.chrf_score as CHRFgrader
+import nltk.translate.gleu_score as GLEUgrader
+import nltk.translate.bleu_score as BLEUgrader
+import nltk.translate.ribes_score as RIBESgrader
 
 def normalize_answer(s):
 
@@ -45,6 +49,63 @@ def f1_score(prediction, ground_truth):
     f1 = (2 * precision * recall) / (precision + recall)
     return f1, precision, recall
 
+def chrf_score(prediction, ground_truth):
+    normalized_prediction = normalize_answer(prediction)
+    normalized_ground_truth = normalize_answer(ground_truth)
+
+    ZERO_METRIC = 0
+
+    if normalized_prediction in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+    if normalized_ground_truth in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+
+    prediction_tokens = normalized_prediction.split()
+    ground_truth_tokens = normalized_ground_truth.split()
+    common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
+    num_same = sum(common.values())
+    if num_same == 0:
+        return ZERO_METRIC
+    return CHRFgrader.sentence_chrf([" ".join(prediction_tokens)], " ".join(ground_truth_tokens))
+
+def bleu_score(prediction, ground_truth):
+    normalized_prediction = normalize_answer(prediction)
+    normalized_ground_truth = normalize_answer(ground_truth)
+
+    ZERO_METRIC = 0
+
+    if normalized_prediction in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+    if normalized_ground_truth in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+
+    prediction_tokens = normalized_prediction.split()
+    ground_truth_tokens = normalized_ground_truth.split()
+    common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
+    num_same = sum(common.values())
+    if num_same == 0:
+        return ZERO_METRIC
+    return BLEUgrader.sentence_bleu([" ".join(prediction_tokens)], " ".join(ground_truth_tokens))
+
+def gleu_score(prediction, ground_truth):
+    normalized_prediction = normalize_answer(prediction)
+    normalized_ground_truth = normalize_answer(ground_truth)
+
+    ZERO_METRIC = 0
+
+    if normalized_prediction in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+    if normalized_ground_truth in ['yes', 'no', 'noanswer'] and normalized_prediction != normalized_ground_truth:
+        return ZERO_METRIC
+
+    prediction_tokens = normalized_prediction.split()
+    ground_truth_tokens = normalized_ground_truth.split()
+    common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
+    num_same = sum(common.values())
+    if num_same == 0:
+        return ZERO_METRIC
+    return GLEUgrader.sentence_gleu([" ".join(prediction_tokens)], " ".join(ground_truth_tokens))
+
 
 def exact_match_score(prediction, ground_truth):
     return (normalize_answer(prediction) == normalize_answer(ground_truth))
@@ -52,10 +113,13 @@ def exact_match_score(prediction, ground_truth):
 def update_answer(metrics, prediction, gold):
     em = exact_match_score(prediction, gold)
     f1, prec, recall = f1_score(prediction, gold)
-    metrics['em'] += float(em)
+
     metrics['f1'] += f1
     metrics['prec'] += prec
     metrics['recall'] += recall
+    metrics['chrf'] +=chrf_score(prediction, gold)
+    metrics['gleu'] +=gleu_score(prediction, gold)
+    metrics['bleu'] +=bleu_score(prediction, gold)
     return em, prec, recall
 
 def update_sp(metrics, prediction, gold):
@@ -78,6 +142,7 @@ def update_sp(metrics, prediction, gold):
     metrics['sp_f1'] += f1
     metrics['sp_prec'] += prec
     metrics['sp_recall'] += recall
+
     return em, prec, recall
 
 def eval(prediction_file, gold_file):
@@ -92,12 +157,14 @@ def eval(prediction_file, gold_file):
     for dp in gold:
         cur_id = dp['_id']
         can_eval_joint = True
+
         if cur_id not in prediction['answer']:
             print('missing answer {}'.format(cur_id))
             can_eval_joint = False
         else:
             em, prec, recall = update_answer(
                 metrics, prediction['answer'][cur_id], dp['answer'])
+
         if cur_id not in prediction['sp']:
             print('missing sp fact {}'.format(cur_id))
             can_eval_joint = False
@@ -127,4 +194,3 @@ def eval(prediction_file, gold_file):
 
 if __name__ == '__main__':
     eval(sys.argv[1], sys.argv[2])
-
